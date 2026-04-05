@@ -40,15 +40,15 @@
         h1 { font-weight: 200; letter-spacing: 8px; color: var(--gold); margin-bottom: 8px; font-size: 1.8rem; }
         .subtitle { font-size: 0.8rem; color: var(--text-dim); letter-spacing: 3px; }
 
-        /* 3x3 九宫格排版 */
+        /* 3x3 九宫格 */
         .selection-panel {
             margin-top: 30px;
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 核心修改：3列 */
+            grid-template-columns: repeat(3, 1fr);
             gap: 12px;
             z-index: 10;
             width: 90%;
-            max-width: 450px; /* 限制宽度让九宫格更紧凑 */
+            max-width: 450px;
             padding: 10px;
         }
 
@@ -73,20 +73,12 @@
             transform: scale(1.02);
         }
         
-        /* 图标样式 */
-        .item-card svg, .item-card .food-icon { 
-            width: 42px; height: 42px; margin-bottom: 12px; 
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-        }
+        .item-card svg, .item-card .food-icon { width: 42px; height: 42px; margin-bottom: 12px; }
         .food-icon { font-size: 32px; line-height: 42px; }
-        .item-card span { display: block; font-size: 0.85rem; color: #bbb; letter-spacing: 1px; }
+        .item-card span { display: block; font-size: 0.85rem; color: #bbb; }
 
         /* 底部操作区 */
-        .action-area {
-            margin-top: 30px;
-            z-index: 10;
-            text-align: center;
-        }
+        .action-area { margin-top: 30px; z-index: 10; text-align: center; }
         .start-btn {
             padding: 14px 70px;
             background: transparent;
@@ -103,12 +95,11 @@
         .start-btn.active { opacity: 1; pointer-events: all; box-shadow: 0 5px 20px rgba(212, 175, 55, 0.2); }
         .start-btn:hover { background: var(--gold); color: #000; }
 
-        /* 画布与交互 */
         #mainCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
         .interaction-overlay {
             position: absolute;
-            bottom: 12vh;
+            bottom: 8vh;
             width: 100%;
             display: flex;
             flex-direction: column;
@@ -116,35 +107,47 @@
             opacity: 0;
             transition: opacity 2s;
             pointer-events: none;
+            z-index: 100;
         }
         .interaction-overlay.show { opacity: 1; pointer-events: all; }
 
-        .timer-info { color: var(--gold); font-size: 0.9rem; margin-bottom: 25px; letter-spacing: 3px; font-weight: 300; }
+        .timer-info { color: var(--gold); font-size: 0.9rem; margin-bottom: 15px; letter-spacing: 3px; }
+        
+        /* 核心修改：改为 textarea 且取消限制 */
         .msg-box {
             width: 85%;
-            max-width: 450px;
-            background: transparent;
-            border: none;
-            border-bottom: 1px solid #444;
+            max-width: 500px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
             color: #fff;
             text-align: center;
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             padding: 15px;
             outline: none;
-            transition: border-color 0.8s;
+            resize: none;
+            transition: all 0.8s;
+            line-height: 1.6;
         }
-        .msg-box:focus { border-color: var(--gold); }
+        .msg-box:focus { border-color: var(--gold); background: rgba(255, 255, 255, 0.08); }
 
+        /* 修改：留言漂浮支持换行 */
         .floating-message {
             position: absolute;
             color: #fff;
-            white-space: nowrap;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
             pointer-events: none;
-            font-size: 1.3rem;
-            letter-spacing: 3px;
-            text-shadow: 0 0 12px rgba(255,255,255,0.4);
+            font-size: 1.2rem;
+            line-height: 1.8;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(255,255,255,0.4);
             z-index: 50;
             font-weight: 300;
+            white-space: pre-wrap; /* 保持换行 */
+            word-wrap: break-word; /* 自动断行 */
         }
 
         .hidden { display: none !important; }
@@ -160,9 +163,7 @@
             <div class="subtitle">请选择祭品（多选）</div>
         </div>
 
-        <!-- 3x3 九宫格 -->
         <div class="selection-panel" id="itemPanel">
-            <!-- 1. 冥币 -->
             <div class="item-card" data-name="冥币">
                 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="8" y="16" width="48" height="32" rx="2" stroke="#d4af37" stroke-width="2.5"/>
@@ -171,7 +172,6 @@
                 </svg>
                 <span>冥币</span>
             </div>
-            <!-- 2. 金元宝 -->
             <div class="item-card" data-name="金元宝">
                 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 42C10 42 8 30 32 30C56 30 54 42 54 42C54 48 46 54 32 54C18 54 10 48 10 42Z" fill="#d4af37" fill-opacity="0.7" stroke="#d4af37" stroke-width="2"/>
@@ -179,7 +179,6 @@
                 </svg>
                 <span>金元宝</span>
             </div>
-            <!-- 3. 金条 -->
             <div class="item-card" data-name="金条">
                 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 48L18 20H46L52 48H12Z" fill="#d4af37" fill-opacity="0.8" stroke="#d4af37" stroke-width="2"/>
@@ -187,17 +186,11 @@
                 </svg>
                 <span>金条</span>
             </div>
-            <!-- 4. 烤乳猪 -->
             <div class="item-card" data-name="烤乳猪"><div class="food-icon">🐖</div><span>烤乳猪</span></div>
-            <!-- 5. 脆皮烧肉 -->
             <div class="item-card" data-name="脆皮烧肉"><div class="food-icon">🥓</div><span>脆皮烧肉</span></div>
-            <!-- 6. 烤羊排 -->
             <div class="item-card" data-name="烤羊排"><div class="food-icon">🍖</div><span>烤羊排</span></div>
-            <!-- 7. 煎牛排 -->
             <div class="item-card" data-name="煎牛排"><div class="food-icon">🥩</div><span>煎牛排</span></div>
-            <!-- 8. 炖排骨 -->
             <div class="item-card" data-name="炖排骨"><div class="food-icon">🥘</div><span>炖排骨</span></div>
-            <!-- 9. 手工饺子 -->
             <div class="item-card" data-name="手工饺子"><div class="food-icon">🥟</div><span>手工饺子</span></div>
         </div>
 
@@ -207,7 +200,8 @@
 
         <div class="interaction-overlay" id="interactionUI">
             <div class="timer-info" id="timer">1:00</div>
-            <input type="text" class="msg-box" id="userMsg" placeholder="留言将随火光寄往远方..." maxlength="20">
+            <!-- 修改点：使用 textarea 并移除字数限制 -->
+            <textarea class="msg-box" id="userMsg" placeholder="在这安静的一分钟里，写下你想对亲人说的话..."></textarea>
         </div>
     </div>
 
@@ -229,7 +223,6 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // 多选逻辑
         itemCards.forEach(card => {
             card.addEventListener('click', () => {
                 const name = card.dataset.name;
@@ -244,20 +237,19 @@
             });
         });
 
-        // 粒子系统
         class Particle {
             constructor(type) {
                 this.type = type;
                 this.reset();
             }
             reset() {
-                this.x = w / 2 + (Math.random() - 0.5) * 100;
-                this.y = h * 0.8;
+                this.x = w / 2 + (Math.random() - 0.5) * 110;
+                this.y = h * 0.82;
                 this.vx = (Math.random() - 0.5) * 1.5;
-                this.vy = this.type === 'fire' ? -(Math.random() * 4 + 3) : -(Math.random() * 2 + 1.5);
-                this.life = Math.random() * 40 + 30;
+                this.vy = this.type === 'fire' ? -(Math.random() * 4 + 3.5) : -(Math.random() * 2 + 1.8);
+                this.life = Math.random() * 40 + 35;
                 this.maxLife = this.life;
-                this.size = this.type === 'fire' ? Math.random() * 30 + 20 : Math.random() * 4 + 1;
+                this.size = this.type === 'fire' ? Math.random() * 35 + 20 : Math.random() * 4 + 1.5;
                 this.alpha = 1;
             }
             update() {
@@ -273,7 +265,7 @@
                 if (this.type === 'fire') {
                     ctx.globalCompositeOperation = 'lighter';
                     let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
-                    grad.addColorStop(0, `rgba(255, 80, 0, ${this.alpha * 0.7})`);
+                    grad.addColorStop(0, `rgba(255, 90, 0, ${this.alpha * 0.8})`);
                     grad.addColorStop(1, 'rgba(255, 20, 0, 0)');
                     ctx.fillStyle = grad;
                 } else {
@@ -305,13 +297,11 @@
             document.getElementById('header').style.opacity = '0';
             document.getElementById('itemPanel').classList.add('hidden');
             startBtn.classList.add('hidden');
-            
             document.getElementById('interactionUI').classList.add('show');
             
             isRunning = true;
-            // 强化火势
-            particles = Array.from({ length: 150 }, () => new Particle('fire'));
-            ash = Array.from({ length: 100 }, () => new Particle('ash'));
+            particles = Array.from({ length: 160 }, () => new Particle('fire'));
+            ash = Array.from({ length: 110 }, () => new Particle('ash'));
 
             let seconds = 60;
             const timerEl = document.getElementById('timer');
@@ -338,21 +328,21 @@
                 el.className = 'floating-message';
                 el.innerText = msg;
                 el.style.left = '50%';
-                el.style.bottom = '30%';
+                el.style.bottom = '25%';
                 el.style.transform = 'translateX(-50%)';
                 document.body.appendChild(el);
 
                 el.animate([
-                    { bottom: '30%', opacity: 1, filter: 'blur(0px)' },
-                    { bottom: '85%', opacity: 0, filter: 'blur(6px)' }
+                    { bottom: '25%', opacity: 1, filter: 'blur(0px)' },
+                    { bottom: '85%', opacity: 0, filter: 'blur(8px)' }
                 ], {
-                    duration: 10000,
+                    duration: 12000,
                     easing: 'ease-out',
                     fill: 'forwards'
                 }).onfinish = () => el.remove();
             }
 
-            setTimeout(() => { location.reload(); }, 12000);
+            setTimeout(() => { location.reload(); }, 15000);
         }
     </script>
 </body>
