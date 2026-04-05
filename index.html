@@ -113,7 +113,6 @@
 
         .timer-info { color: var(--gold); font-size: 0.9rem; margin-bottom: 15px; letter-spacing: 3px; }
         
-        /* 核心修改：改为 textarea 且取消限制 */
         .msg-box {
             width: 85%;
             max-width: 500px;
@@ -132,7 +131,7 @@
         }
         .msg-box:focus { border-color: var(--gold); background: rgba(255, 255, 255, 0.08); }
 
-        /* 修改：留言漂浮支持换行 */
+        /* 留言漂浮样式 */
         .floating-message {
             position: absolute;
             color: #fff;
@@ -146,8 +145,27 @@
             text-shadow: 0 0 15px rgba(255,255,255,0.4);
             z-index: 50;
             font-weight: 300;
-            white-space: pre-wrap; /* 保持换行 */
-            word-wrap: break-word; /* 自动断行 */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* 最终回响文案样式 */
+        .final-echo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 90%;
+            color: var(--gold);
+            font-size: 1.4rem;
+            letter-spacing: 4px;
+            font-weight: 200;
+            opacity: 0;
+            transition: opacity 3s ease;
+            z-index: 200;
+            pointer-events: none;
+            line-height: 2;
         }
 
         .hidden { display: none !important; }
@@ -200,8 +218,13 @@
 
         <div class="interaction-overlay" id="interactionUI">
             <div class="timer-info" id="timer">1:00</div>
-            <!-- 修改点：使用 textarea 并移除字数限制 -->
             <textarea class="msg-box" id="userMsg" placeholder="在这安静的一分钟里，写下你想对亲人说的话..."></textarea>
+        </div>
+
+        <!-- 最终回响文案 -->
+        <div class="final-echo" id="finalEcho">
+            万物皆有回响，思念已达彼岸。<br>
+            他们听见了，也永远爱你。
         </div>
     </div>
 
@@ -332,17 +355,36 @@
                 el.style.transform = 'translateX(-50%)';
                 document.body.appendChild(el);
 
-                el.animate([
+                // 寄语升空动画
+                const anim = el.animate([
                     { bottom: '25%', opacity: 1, filter: 'blur(0px)' },
                     { bottom: '85%', opacity: 0, filter: 'blur(8px)' }
                 ], {
                     duration: 12000,
                     easing: 'ease-out',
                     fill: 'forwards'
-                }).onfinish = () => el.remove();
-            }
+                });
 
-            setTimeout(() => { location.reload(); }, 15000);
+                // 当寄语即将消失时，显示回响文案
+                anim.onfinish = () => {
+                    el.remove();
+                    showFinalEcho();
+                };
+            } else {
+                // 如果没有输入留言，直接显示回响
+                showFinalEcho();
+            }
+        }
+
+        function showFinalEcho() {
+            const echo = document.getElementById('finalEcho');
+            echo.style.opacity = '1';
+            
+            // 8秒后自动刷新页面重置，给足够时间阅读
+            setTimeout(() => { 
+                echo.style.opacity = '0';
+                setTimeout(() => location.reload(), 3000);
+            }, 8000);
         }
     </script>
 </body>
