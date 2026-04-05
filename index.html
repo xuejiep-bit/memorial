@@ -9,7 +9,7 @@
             --bg: #030305;
             --gold: #d4af37;
             --text-dim: #888;
-            --accent: #ff4d00;
+            --fire-core: #ff4d00;
         }
 
         body, html {
@@ -20,7 +20,6 @@
             overflow: hidden;
         }
 
-        /* 布局控制 */
         .app-container {
             position: relative;
             width: 100%;
@@ -28,112 +27,124 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: radial-gradient(circle at 50% 80%, #151520 0%, #030305 70%);
+            background: radial-gradient(circle at 50% 85%, #121218 0%, #030305 80%);
         }
 
         /* 顶部引导 */
         .intro-header {
-            margin-top: 40px;
+            margin-top: 5vh;
             text-align: center;
             z-index: 10;
             transition: opacity 1s;
         }
-        h1 { font-weight: 200; letter-spacing: 6px; color: var(--gold); margin-bottom: 5px; }
-        .subtitle { font-size: 0.85rem; color: var(--text-dim); letter-spacing: 2px; }
+        h1 { font-weight: 200; letter-spacing: 8px; color: var(--gold); margin-bottom: 8px; font-size: 1.8rem; }
+        .subtitle { font-size: 0.8rem; color: var(--text-dim); letter-spacing: 3px; }
 
-        /* 祭品选择网格 */
+        /* 3x3 九宫格排版 */
         .selection-panel {
             margin-top: 30px;
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(3, 1fr); /* 核心修改：3列 */
+            gap: 12px;
             z-index: 10;
-            max-width: 600px;
-            padding: 20px;
+            width: 90%;
+            max-width: 450px; /* 限制宽度让九宫格更紧凑 */
+            padding: 10px;
         }
 
         .item-card {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid #222;
-            padding: 15px 10px;
+            padding: 18px 5px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 8px;
-            position: relative;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-        .item-card:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.05); }
+        .item-card:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.04); }
         .item-card.selected { 
             border-color: var(--gold); 
-            background: rgba(212, 175, 55, 0.15);
-            transform: translateY(-5px);
+            background: rgba(212, 175, 55, 0.12);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+            transform: scale(1.02);
         }
-        .item-card svg, .item-card .food-icon { width: 40px; height: 40px; margin-bottom: 10px; }
-        .item-card span { display: block; font-size: 0.85rem; color: #ccc; }
+        
+        /* 图标样式 */
+        .item-card svg, .item-card .food-icon { 
+            width: 42px; height: 42px; margin-bottom: 12px; 
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+        .food-icon { font-size: 32px; line-height: 42px; }
+        .item-card span { display: block; font-size: 0.85rem; color: #bbb; letter-spacing: 1px; }
 
-        /* 开始按钮 */
-        .start-btn {
+        /* 底部操作区 */
+        .action-area {
             margin-top: 30px;
-            padding: 12px 60px;
+            z-index: 10;
+            text-align: center;
+        }
+        .start-btn {
+            padding: 14px 70px;
             background: transparent;
             border: 1px solid var(--gold);
             color: var(--gold);
             font-size: 1rem;
-            letter-spacing: 4px;
+            letter-spacing: 5px;
             cursor: pointer;
-            border-radius: 40px;
-            z-index: 10;
-            transition: all 0.5s;
-            opacity: 0.5;
+            border-radius: 50px;
+            transition: all 0.6s;
+            opacity: 0.3;
             pointer-events: none;
         }
-        .start-btn.active { opacity: 1; pointer-events: all; box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
+        .start-btn.active { opacity: 1; pointer-events: all; box-shadow: 0 5px 20px rgba(212, 175, 55, 0.2); }
         .start-btn:hover { background: var(--gold); color: #000; }
 
-        /* 画布渲染 */
-        #mainCanvas {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-        }
-
-        /* 互动留言区 */
+        /* 画布与交互 */
+        #mainCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        
         .interaction-overlay {
             position: absolute;
-            bottom: 80px;
+            bottom: 12vh;
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             opacity: 0;
-            transition: opacity 1.5s;
+            transition: opacity 2s;
+            pointer-events: none;
         }
-        .timer-info { color: var(--gold); font-size: 0.9rem; margin-bottom: 20px; letter-spacing: 2px; }
+        .interaction-overlay.show { opacity: 1; pointer-events: all; }
+
+        .timer-info { color: var(--gold); font-size: 0.9rem; margin-bottom: 25px; letter-spacing: 3px; font-weight: 300; }
         .msg-box {
-            width: 80%;
-            max-width: 500px;
+            width: 85%;
+            max-width: 450px;
             background: transparent;
             border: none;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #444;
             color: #fff;
             text-align: center;
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             padding: 15px;
             outline: none;
             transition: border-color 0.8s;
         }
         .msg-box:focus { border-color: var(--gold); }
 
-        /* 最终漂浮留言样式 */
         .floating-message {
             position: absolute;
             color: #fff;
             white-space: nowrap;
             pointer-events: none;
-            font-size: 1.4rem;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            text-shadow: 0 0 12px rgba(255,255,255,0.4);
             z-index: 50;
+            font-weight: 300;
         }
 
         .hidden { display: none !important; }
@@ -146,49 +157,57 @@
 
         <div class="intro-header" id="header">
             <h1>心灯寄思</h1>
-            <div class="subtitle">选择想要祭献的物品</div>
+            <div class="subtitle">请选择祭品（多选）</div>
         </div>
 
+        <!-- 3x3 九宫格 -->
         <div class="selection-panel" id="itemPanel">
-            <!-- 祭品：冥币 (SVG) -->
+            <!-- 1. 冥币 -->
             <div class="item-card" data-name="冥币">
                 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="10" y="16" width="44" height="32" rx="2" stroke="#d4af37" stroke-width="2"/>
-                    <circle cx="32" cy="32" r="8" stroke="#d4af37" stroke-width="2"/>
-                    <path d="M16 22H24M40 22H48M16 42H24M40 42H48" stroke="#d4af37" stroke-width="2"/>
+                    <rect x="8" y="16" width="48" height="32" rx="2" stroke="#d4af37" stroke-width="2.5"/>
+                    <circle cx="32" cy="32" r="9" stroke="#d4af37" stroke-width="2"/>
+                    <path d="M14 24H22M42 24H50M14 40H22M42 40H50" stroke="#d4af37" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
                 <span>冥币</span>
             </div>
-            <!-- 祭品：金元宝 (SVG) -->
+            <!-- 2. 金元宝 -->
             <div class="item-card" data-name="金元宝">
                 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 40C12 40 10 28 32 28C54 28 52 40 52 40C52 46 44 52 32 52C20 52 12 46 12 40Z" fill="#d4af37" opacity="0.8"/>
-                    <path d="M22 28C22 20 42 20 42 28" stroke="#d4af37" stroke-width="3"/>
+                    <path d="M10 42C10 42 8 30 32 30C56 30 54 42 54 42C54 48 46 54 32 54C18 54 10 48 10 42Z" fill="#d4af37" fill-opacity="0.7" stroke="#d4af37" stroke-width="2"/>
+                    <path d="M22 30C22 20 42 20 42 30" stroke="#d4af37" stroke-width="3" stroke-linecap="round"/>
                 </svg>
                 <span>金元宝</span>
             </div>
-            <!-- 祭品：金条 (SVG) -->
+            <!-- 3. 金条 -->
             <div class="item-card" data-name="金条">
                 <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M14 44L20 20H44L50 44H14Z" fill="#d4af37" opacity="0.8" stroke="#d4af37" stroke-width="2"/>
-                    <path d="M22 26H42M23 32H41M24 38H40" stroke="#000" stroke-opacity="0.2" stroke-width="2"/>
+                    <path d="M12 48L18 20H46L52 48H12Z" fill="#d4af37" fill-opacity="0.8" stroke="#d4af37" stroke-width="2"/>
+                    <path d="M22 28H42M24 36H40" stroke="#000" stroke-opacity="0.2" stroke-width="2"/>
                 </svg>
                 <span>金条</span>
             </div>
-            <!-- 美食系列 -->
+            <!-- 4. 烤乳猪 -->
             <div class="item-card" data-name="烤乳猪"><div class="food-icon">🐖</div><span>烤乳猪</span></div>
+            <!-- 5. 脆皮烧肉 -->
             <div class="item-card" data-name="脆皮烧肉"><div class="food-icon">🥓</div><span>脆皮烧肉</span></div>
-            <div class="item-card" data-name="羊排"><div class="food-icon">🍖</div><span>烤羊排</span></div>
-            <div class="item-card" data-name="牛排"><div class="food-icon">🥩</div><span>煎牛排</span></div>
-            <div class="item-card" data-name="排骨"><div class="food-icon">🥘</div><span>炖排骨</span></div>
-            <div class="item-card" data-name="饺子"><div class="food-icon">🥟</div><span>手工饺子</span></div>
+            <!-- 6. 烤羊排 -->
+            <div class="item-card" data-name="烤羊排"><div class="food-icon">🍖</div><span>烤羊排</span></div>
+            <!-- 7. 煎牛排 -->
+            <div class="item-card" data-name="煎牛排"><div class="food-icon">🥩</div><span>煎牛排</span></div>
+            <!-- 8. 炖排骨 -->
+            <div class="item-card" data-name="炖排骨"><div class="food-icon">🥘</div><span>炖排骨</span></div>
+            <!-- 9. 手工饺子 -->
+            <div class="item-card" data-name="手工饺子"><div class="food-icon">🥟</div><span>手工饺子</span></div>
         </div>
 
-        <button class="start-btn" id="startBtn">开始祭奠</button>
+        <div class="action-area">
+            <button class="start-btn" id="startBtn">开启祭奠</button>
+        </div>
 
         <div class="interaction-overlay" id="interactionUI">
             <div class="timer-info" id="timer">1:00</div>
-            <input type="text" class="msg-box" id="userMsg" placeholder="留言将随火光升起...">
+            <input type="text" class="msg-box" id="userMsg" placeholder="留言将随火光寄往远方..." maxlength="20">
         </div>
     </div>
 
@@ -203,7 +222,6 @@
         let isRunning = false;
         let w, h;
 
-        // 初始化画布尺寸
         function resize() {
             w = canvas.width = window.innerWidth;
             h = canvas.height = window.innerHeight;
@@ -226,20 +244,20 @@
             });
         });
 
-        // 粒子类：火焰和灰烬
+        // 粒子系统
         class Particle {
             constructor(type) {
-                this.type = type; // 'fire' or 'ash'
+                this.type = type;
                 this.reset();
             }
             reset() {
-                this.x = w / 2 + (Math.random() - 0.5) * 80;
-                this.y = h * 0.75;
+                this.x = w / 2 + (Math.random() - 0.5) * 100;
+                this.y = h * 0.8;
                 this.vx = (Math.random() - 0.5) * 1.5;
-                this.vy = this.type === 'fire' ? -(Math.random() * 4 + 2) : -(Math.random() * 2 + 1);
-                this.life = Math.random() * 40 + 20;
+                this.vy = this.type === 'fire' ? -(Math.random() * 4 + 3) : -(Math.random() * 2 + 1.5);
+                this.life = Math.random() * 40 + 30;
                 this.maxLife = this.life;
-                this.size = this.type === 'fire' ? Math.random() * 25 + 15 : Math.random() * 4 + 1;
+                this.size = this.type === 'fire' ? Math.random() * 30 + 20 : Math.random() * 4 + 1;
                 this.alpha = 1;
             }
             update() {
@@ -247,7 +265,7 @@
                 this.y += this.vy;
                 this.life--;
                 this.alpha = this.life / this.maxLife;
-                if (this.type === 'ash') this.vx += Math.sin(this.y / 50) * 0.1;
+                if (this.type === 'ash') this.vx += Math.sin(this.y / 60) * 0.15;
                 if (this.life <= 0 && isRunning) this.reset();
             }
             draw() {
@@ -255,41 +273,45 @@
                 if (this.type === 'fire') {
                     ctx.globalCompositeOperation = 'lighter';
                     let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
-                    grad.addColorStop(0, `rgba(255, 100, 0, ${this.alpha * 0.6})`);
-                    grad.addColorStop(1, 'rgba(255, 50, 0, 0)');
+                    grad.addColorStop(0, `rgba(255, 80, 0, ${this.alpha * 0.7})`);
+                    grad.addColorStop(1, 'rgba(255, 20, 0, 0)');
                     ctx.fillStyle = grad;
                 } else {
                     ctx.globalCompositeOperation = 'source-over';
-                    ctx.fillStyle = `rgba(150, 150, 150, ${this.alpha * 0.5})`;
+                    ctx.fillStyle = `rgba(180, 180, 180, ${this.alpha * 0.5})`;
                 }
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
 
-        // 核心循环
         function animate() {
             ctx.clearRect(0, 0, w, h);
-            if (isRunning || particles.length > 0) {
-                particles.forEach(p => { p.update(); p.draw(); });
-                ash.forEach(p => { p.update(); p.draw(); });
+            if (isRunning || (particles.length + ash.length) > 0) {
+                particles.forEach((p, i) => { 
+                    p.update(); p.draw(); 
+                    if(!isRunning && p.life <= 0) particles.splice(i, 1);
+                });
+                ash.forEach((a, i) => { 
+                    a.update(); a.draw(); 
+                    if(!isRunning && a.life <= 0) ash.splice(i, 1);
+                });
             }
             requestAnimationFrame(animate);
         }
         animate();
 
-        // 开始仪式
         startBtn.onclick = () => {
             document.getElementById('header').style.opacity = '0';
             document.getElementById('itemPanel').classList.add('hidden');
             startBtn.classList.add('hidden');
             
-            document.getElementById('interactionUI').style.opacity = '1';
+            document.getElementById('interactionUI').classList.add('show');
             
             isRunning = true;
-            // 生成大量粒子，火要大
-            particles = Array.from({ length: 120 }, () => new Particle('fire'));
-            ash = Array.from({ length: 80 }, () => new Particle('ash'));
+            // 强化火势
+            particles = Array.from({ length: 150 }, () => new Particle('fire'));
+            ash = Array.from({ length: 100 }, () => new Particle('ash'));
 
             let seconds = 60;
             const timerEl = document.getElementById('timer');
@@ -306,41 +328,31 @@
             }, 1000);
         };
 
-        // 结束逻辑
         function finish() {
             const msg = document.getElementById('userMsg').value;
-            isRunning = false; // 停止产生新火
-            document.getElementById('interactionUI').style.opacity = '0';
+            isRunning = false; 
+            document.getElementById('interactionUI').classList.remove('show');
 
-            // 如果有留言，执行留言升空动画
             if (msg.trim() !== "") {
-                createFloatingMessage(msg);
+                const el = document.createElement('div');
+                el.className = 'floating-message';
+                el.innerText = msg;
+                el.style.left = '50%';
+                el.style.bottom = '30%';
+                el.style.transform = 'translateX(-50%)';
+                document.body.appendChild(el);
+
+                el.animate([
+                    { bottom: '30%', opacity: 1, filter: 'blur(0px)' },
+                    { bottom: '85%', opacity: 0, filter: 'blur(6px)' }
+                ], {
+                    duration: 10000,
+                    easing: 'ease-out',
+                    fill: 'forwards'
+                }).onfinish = () => el.remove();
             }
 
-            setTimeout(() => {
-                location.reload();
-            }, 10000);
-        }
-
-        function createFloatingMessage(text) {
-            const el = document.createElement('div');
-            el.className = 'floating-message';
-            el.innerText = text;
-            el.style.left = '50%';
-            el.style.bottom = '30%';
-            el.style.transform = 'translateX(-50%)';
-            document.body.appendChild(el);
-
-            const anim = el.animate([
-                { bottom: '30%', opacity: 1, filter: 'blur(0px)' },
-                { bottom: '85%', opacity: 0, filter: 'blur(4px)' }
-            ], {
-                duration: 8000,
-                easing: 'ease-out',
-                fill: 'forwards'
-            });
-
-            anim.onfinish = () => el.remove();
+            setTimeout(() => { location.reload(); }, 12000);
         }
     </script>
 </body>
