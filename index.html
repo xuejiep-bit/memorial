@@ -3,158 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>思念之火 - 在线祭奠</title>
+    <title>思念之光 - 现代祭奠</title>
     <style>
         :root {
-            --bg: #050507;
+            --bg: #030305;
             --gold: #d4af37;
-            --text: #e0e0e0;
-            --font-main: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            --text-dim: #888;
+            --accent: #ff4d00;
         }
 
-        * { box-sizing: border-box; }
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background-color: var(--bg); 
-            color: var(--text);
-            font-family: var(--font-main);
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            color: #fff;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
             overflow: hidden;
         }
 
-        /* 极简背景 */
-        .container {
+        /* 布局控制 */
+        .app-container {
             position: relative;
             width: 100%;
             height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            background: radial-gradient(circle at center, #111 0%, #050507 100%);
+            background: radial-gradient(circle at 50% 80%, #151520 0%, #030305 70%);
         }
 
-        /* 顶部标题 */
-        .header {
-            position: absolute;
-            top: 40px;
+        /* 顶部引导 */
+        .intro-header {
+            margin-top: 40px;
             text-align: center;
             z-index: 10;
+            transition: opacity 1s;
         }
-        h1 { font-weight: 300; letter-spacing: 4px; color: var(--gold); margin-bottom: 10px; }
-        p { font-size: 0.9rem; color: #666; }
+        h1 { font-weight: 200; letter-spacing: 6px; color: var(--gold); margin-bottom: 5px; }
+        .subtitle { font-size: 0.85rem; color: var(--text-dim); letter-spacing: 2px; }
 
-        /* 画布区域 */
-        #fireCanvas {
+        /* 祭品选择网格 */
+        .selection-panel {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            z-index: 10;
+            max-width: 600px;
+            padding: 20px;
+        }
+
+        .item-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #222;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 8px;
+            position: relative;
+        }
+        .item-card:hover { border-color: var(--gold); background: rgba(212, 175, 55, 0.05); }
+        .item-card.selected { 
+            border-color: var(--gold); 
+            background: rgba(212, 175, 55, 0.15);
+            transform: translateY(-5px);
+        }
+        .item-card svg, .item-card .food-icon { width: 40px; height: 40px; margin-bottom: 10px; }
+        .item-card span { display: block; font-size: 0.85rem; color: #ccc; }
+
+        /* 开始按钮 */
+        .start-btn {
+            margin-top: 30px;
+            padding: 12px 60px;
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-size: 1rem;
+            letter-spacing: 4px;
+            cursor: pointer;
+            border-radius: 40px;
+            z-index: 10;
+            transition: all 0.5s;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .start-btn.active { opacity: 1; pointer-events: all; box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
+        .start-btn:hover { background: var(--gold); color: #000; }
+
+        /* 画布渲染 */
+        #mainCanvas {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
         }
 
-        /* 交互菜单 */
-        .ui-layer {
-            position: relative;
-            z-index: 20;
-            text-align: center;
-            transition: opacity 1s ease;
-        }
-
-        .item-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-top: 30px;
-        }
-
-        .item-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid #333;
-            color: var(--text);
-            padding: 15px 25px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border-radius: 4px;
-        }
-        .item-btn:hover {
-            border-color: var(--gold);
-            background: rgba(212, 175, 55, 0.1);
-        }
-        .item-btn span { display: block; font-size: 1.2rem; margin-bottom: 5px; }
-
-        /* 祭奠进行中状态 */
-        .ritual-overlay {
-            position: fixed;
-            bottom: 60px;
+        /* 互动留言区 */
+        .interaction-overlay {
+            position: absolute;
+            bottom: 80px;
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             opacity: 0;
-            pointer-events: none;
-            transition: opacity 1s;
+            transition: opacity 1.5s;
         }
-
-        .ritual-overlay.active { opacity: 1; pointer-events: all; }
-
-        .timer-text { color: var(--gold); font-size: 1rem; margin-bottom: 20px; letter-spacing: 2px; }
-        
-        .message-input {
+        .timer-info { color: var(--gold); font-size: 0.9rem; margin-bottom: 20px; letter-spacing: 2px; }
+        .msg-box {
             width: 80%;
             max-width: 500px;
             background: transparent;
             border: none;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px solid #333;
             color: #fff;
             text-align: center;
-            font-size: 1.1rem;
-            padding: 10px;
+            font-size: 1.2rem;
+            padding: 15px;
             outline: none;
-            transition: border-color 0.5s;
+            transition: border-color 0.8s;
         }
-        .message-input:focus { border-color: var(--gold); }
+        .msg-box:focus { border-color: var(--gold); }
 
-        /* 隐藏控制 */
-        .hidden { display: none; }
+        /* 最终漂浮留言样式 */
+        .floating-message {
+            position: absolute;
+            color: #fff;
+            white-space: nowrap;
+            pointer-events: none;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            z-index: 50;
+        }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <canvas id="fireCanvas"></canvas>
+    <div class="app-container">
+        <canvas id="mainCanvas"></canvas>
 
-        <div class="header" id="header">
-            <h1>静心寄思</h1>
-            <p>选择祭品，开启一分钟的缅怀时光</p>
+        <div class="intro-header" id="header">
+            <h1>心灯寄思</h1>
+            <div class="subtitle">选择想要祭献的物品</div>
         </div>
 
-        <!-- 初始选择菜单 -->
-        <div class="ui-layer" id="menu">
-            <div class="item-grid">
-                <button class="item-btn" onclick="start(this, '冥币')"><span>🧧</span>冥币</button>
-                <button class="item-btn" onclick="start(this, '金元宝')"><span>💎</span>金元宝</button>
-                <button class="item-btn" onclick="start(this, '金条')"><span>🏆</span>金条</button>
-                <button class="item-btn" onclick="start(this, '饺子')"><span>🥟</span>饺子</button>
-                <button class="item-btn" onclick="start(this, '红烧肉')"><span>🥩</span>红烧肉</button>
-                <button class="item-btn" onclick="start(this, '美酒')"><span>🍶</span>美酒</button>
+        <div class="selection-panel" id="itemPanel">
+            <!-- 祭品：冥币 (SVG) -->
+            <div class="item-card" data-name="冥币">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="10" y="16" width="44" height="32" rx="2" stroke="#d4af37" stroke-width="2"/>
+                    <circle cx="32" cy="32" r="8" stroke="#d4af37" stroke-width="2"/>
+                    <path d="M16 22H24M40 22H48M16 42H24M40 42H48" stroke="#d4af37" stroke-width="2"/>
+                </svg>
+                <span>冥币</span>
             </div>
+            <!-- 祭品：金元宝 (SVG) -->
+            <div class="item-card" data-name="金元宝">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 40C12 40 10 28 32 28C54 28 52 40 52 40C52 46 44 52 32 52C20 52 12 46 12 40Z" fill="#d4af37" opacity="0.8"/>
+                    <path d="M22 28C22 20 42 20 42 28" stroke="#d4af37" stroke-width="3"/>
+                </svg>
+                <span>金元宝</span>
+            </div>
+            <!-- 祭品：金条 (SVG) -->
+            <div class="item-card" data-name="金条">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 44L20 20H44L50 44H14Z" fill="#d4af37" opacity="0.8" stroke="#d4af37" stroke-width="2"/>
+                    <path d="M22 26H42M23 32H41M24 38H40" stroke="#000" stroke-opacity="0.2" stroke-width="2"/>
+                </svg>
+                <span>金条</span>
+            </div>
+            <!-- 美食系列 -->
+            <div class="item-card" data-name="烤乳猪"><div class="food-icon">🐖</div><span>烤乳猪</span></div>
+            <div class="item-card" data-name="脆皮烧肉"><div class="food-icon">🥓</div><span>脆皮烧肉</span></div>
+            <div class="item-card" data-name="羊排"><div class="food-icon">🍖</div><span>烤羊排</span></div>
+            <div class="item-card" data-name="牛排"><div class="food-icon">🥩</div><span>煎牛排</span></div>
+            <div class="item-card" data-name="排骨"><div class="food-icon">🥘</div><span>炖排骨</span></div>
+            <div class="item-card" data-name="饺子"><div class="food-icon">🥟</div><span>手工饺子</span></div>
         </div>
 
-        <!-- 进行中的交互层 -->
-        <div class="ritual-overlay" id="ritualUI">
-            <div class="timer-text" id="timerTip">正在为您传递思念... 60s</div>
-            <input type="text" class="message-input" placeholder="此刻，你想对亲人说些什么？" id="msgInput">
+        <button class="start-btn" id="startBtn">开始祭奠</button>
+
+        <div class="interaction-overlay" id="interactionUI">
+            <div class="timer-info" id="timer">1:00</div>
+            <input type="text" class="msg-box" id="userMsg" placeholder="留言将随火光升起...">
         </div>
     </div>
 
     <script>
-        /** 火焰与灰烬粒子系统 **/
-        const canvas = document.getElementById('fireCanvas');
+        const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d');
+        const itemCards = document.querySelectorAll('.item-card');
+        const startBtn = document.getElementById('startBtn');
+        let selectedItems = new Set();
         let particles = [];
-        let ashParticles = [];
-        let isBurning = false;
+        let ash = [];
+        let isRunning = false;
         let w, h;
 
+        // 初始化画布尺寸
         function resize() {
             w = canvas.width = window.innerWidth;
             h = canvas.height = window.innerHeight;
@@ -162,106 +211,137 @@
         window.addEventListener('resize', resize);
         resize();
 
+        // 多选逻辑
+        itemCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const name = card.dataset.name;
+                if (selectedItems.has(name)) {
+                    selectedItems.delete(name);
+                    card.classList.remove('selected');
+                } else {
+                    selectedItems.add(name);
+                    card.classList.add('selected');
+                }
+                startBtn.classList.toggle('active', selectedItems.size > 0);
+            });
+        });
+
+        // 粒子类：火焰和灰烬
         class Particle {
-            constructor(isAsh = false) {
-                this.isAsh = isAsh;
+            constructor(type) {
+                this.type = type; // 'fire' or 'ash'
                 this.reset();
             }
             reset() {
-                this.x = w / 2 + (Math.random() - 0.5) * 60;
-                this.y = h * 0.7;
-                this.vx = (Math.random() - 0.5) * 2;
-                this.vy = this.isAsh ? -(Math.random() * 2 + 1) : -(Math.random() * 3 + 2);
-                this.life = Math.random() * 30 + 20;
+                this.x = w / 2 + (Math.random() - 0.5) * 80;
+                this.y = h * 0.75;
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = this.type === 'fire' ? -(Math.random() * 4 + 2) : -(Math.random() * 2 + 1);
+                this.life = Math.random() * 40 + 20;
                 this.maxLife = this.life;
-                this.size = this.isAsh ? Math.random() * 3 : Math.random() * 20 + 10;
-                this.color = this.isAsh ? `rgba(150,150,150,${Math.random()*0.5})` : `hsla(${Math.random() * 30 + 15}, 100%, 50%, 0.5)`;
+                this.size = this.type === 'fire' ? Math.random() * 25 + 15 : Math.random() * 4 + 1;
+                this.alpha = 1;
             }
             update() {
                 this.x += this.vx;
                 this.y += this.vy;
                 this.life--;
-                if (this.isAsh) {
-                    this.vx += Math.sin(this.y * 0.01) * 0.1; // 灰烬随风摆动
-                }
-                if (this.life <= 0) this.reset();
+                this.alpha = this.life / this.maxLife;
+                if (this.type === 'ash') this.vx += Math.sin(this.y / 50) * 0.1;
+                if (this.life <= 0 && isRunning) this.reset();
             }
             draw() {
-                ctx.save();
                 ctx.beginPath();
-                if (!this.isAsh) {
+                if (this.type === 'fire') {
                     ctx.globalCompositeOperation = 'lighter';
-                    ctx.filter = 'blur(8px)';
+                    let grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+                    grad.addColorStop(0, `rgba(255, 100, 0, ${this.alpha * 0.6})`);
+                    grad.addColorStop(1, 'rgba(255, 50, 0, 0)');
+                    ctx.fillStyle = grad;
+                } else {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.fillStyle = `rgba(150, 150, 150, ${this.alpha * 0.5})`;
                 }
-                ctx.fillStyle = this.color;
-                ctx.arc(this.x, this.y, this.size * (this.life / this.maxLife), 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.restore();
             }
         }
 
-        function initParticles() {
-            particles = Array.from({ length: 80 }, () => new Particle(false));
-            ashParticles = Array.from({ length: 50 }, () => new Particle(true));
-        }
-
+        // 核心循环
         function animate() {
             ctx.clearRect(0, 0, w, h);
-            if (isBurning) {
+            if (isRunning || particles.length > 0) {
                 particles.forEach(p => { p.update(); p.draw(); });
-                ashParticles.forEach(p => { p.update(); p.draw(); });
+                ash.forEach(p => { p.update(); p.draw(); });
             }
             requestAnimationFrame(animate);
         }
+        animate();
 
-        /** 逻辑控制 **/
-        function start(btn, itemName) {
-            document.getElementById('menu').style.opacity = '0';
-            setTimeout(() => document.getElementById('menu').classList.add('hidden'), 1000);
+        // 开始仪式
+        startBtn.onclick = () => {
+            document.getElementById('header').style.opacity = '0';
+            document.getElementById('itemPanel').classList.add('hidden');
+            startBtn.classList.add('hidden');
             
-            isBurning = true;
-            initParticles();
+            document.getElementById('interactionUI').style.opacity = '1';
             
-            const ritualUI = document.getElementById('ritualUI');
-            ritualUI.classList.add('active');
-            
-            let timeLeft = 60;
-            const timerTip = document.getElementById('timerTip');
-            
+            isRunning = true;
+            // 生成大量粒子，火要大
+            particles = Array.from({ length: 120 }, () => new Particle('fire'));
+            ash = Array.from({ length: 80 }, () => new Particle('ash'));
+
+            let seconds = 60;
+            const timerEl = document.getElementById('timer');
             const countdown = setInterval(() => {
-                timeLeft--;
-                timerTip.innerText = `正在为您祭献${itemName}... ${timeLeft}s`;
+                seconds--;
+                let m = Math.floor(seconds / 60);
+                let s = seconds % 60;
+                timerEl.innerText = `${m}:${s < 10 ? '0' + s : s}`;
                 
-                if (timeLeft <= 0) {
+                if (seconds <= 0) {
                     clearInterval(countdown);
                     finish();
                 }
             }, 1000);
-        }
+        };
 
+        // 结束逻辑
         function finish() {
-            const ritualUI = document.getElementById('ritualUI');
-            const timerTip = document.getElementById('timerTip');
-            const msgInput = document.getElementById('msgInput');
-            
-            // 慢慢熄灭火焰
-            const fadeEffect = setInterval(() => {
-                if(particles.length > 0) particles.pop();
-                else {
-                    clearInterval(fadeEffect);
-                    isBurning = false;
-                }
-            }, 50);
+            const msg = document.getElementById('userMsg').value;
+            isRunning = false; // 停止产生新火
+            document.getElementById('interactionUI').style.opacity = '0';
 
-            timerTip.innerText = "仪式完成，思念已随灰烬寄往远方。";
-            msgInput.style.display = 'none';
-            
+            // 如果有留言，执行留言升空动画
+            if (msg.trim() !== "") {
+                createFloatingMessage(msg);
+            }
+
             setTimeout(() => {
-                location.reload(); 
-            }, 8000);
+                location.reload();
+            }, 10000);
         }
 
-        animate();
+        function createFloatingMessage(text) {
+            const el = document.createElement('div');
+            el.className = 'floating-message';
+            el.innerText = text;
+            el.style.left = '50%';
+            el.style.bottom = '30%';
+            el.style.transform = 'translateX(-50%)';
+            document.body.appendChild(el);
+
+            const anim = el.animate([
+                { bottom: '30%', opacity: 1, filter: 'blur(0px)' },
+                { bottom: '85%', opacity: 0, filter: 'blur(4px)' }
+            ], {
+                duration: 8000,
+                easing: 'ease-out',
+                fill: 'forwards'
+            });
+
+            anim.onfinish = () => el.remove();
+        }
     </script>
 </body>
 </html>
