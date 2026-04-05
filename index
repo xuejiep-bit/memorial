@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思念之火 - 在线祭奠</title>
+    <style>
+        :root {
+            --bg: #050507;
+            --gold: #d4af37;
+            --text: #e0e0e0;
+            --font-main: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background-color: var(--bg); 
+            color: var(--text);
+            font-family: var(--font-main);
+            overflow: hidden;
+        }
+
+        /* 极简背景 */
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, #111 0%, #050507 100%);
+        }
+
+        /* 顶部标题 */
+        .header {
+            position: absolute;
+            top: 40px;
+            text-align: center;
+            z-index: 10;
+        }
+        h1 { font-weight: 300; letter-spacing: 4px; color: var(--gold); margin-bottom: 10px; }
+        p { font-size: 0.9rem; color: #666; }
+
+        /* 画布区域 */
+        #fireCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        /* 交互菜单 */
+        .ui-layer {
+            position: relative;
+            z-index: 20;
+            text-align: center;
+            transition: opacity 1s ease;
+        }
+
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .item-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #333;
+            color: var(--text);
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 4px;
+        }
+        .item-btn:hover {
+            border-color: var(--gold);
+            background: rgba(212, 175, 55, 0.1);
+        }
+        .item-btn span { display: block; font-size: 1.2rem; margin-bottom: 5px; }
+
+        /* 祭奠进行中状态 */
+        .ritual-overlay {
+            position: fixed;
+            bottom: 60px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s;
+        }
+
+        .ritual-overlay.active { opacity: 1; pointer-events: all; }
+
+        .timer-text { color: var(--gold); font-size: 1rem; margin-bottom: 20px; letter-spacing: 2px; }
+        
+        .message-input {
+            width: 80%;
+            max-width: 500px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #444;
+            color: #fff;
+            text-align: center;
+            font-size: 1.1rem;
+            padding: 10px;
+            outline: none;
+            transition: border-color 0.5s;
+        }
+        .message-input:focus { border-color: var(--gold); }
+
+        /* 隐藏控制 */
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <canvas id="fireCanvas"></canvas>
+
+        <div class="header" id="header">
+            <h1>静心寄思</h1>
+            <p>选择祭品，开启一分钟的缅怀时光</p>
+        </div>
+
+        <!-- 初始选择菜单 -->
+        <div class="ui-layer" id="menu">
+            <div class="item-grid">
+                <button class="item-btn" onclick="start(this, '冥币')"><span>🧧</span>冥币</button>
+                <button class="item-btn" onclick="start(this, '金元宝')"><span>💎</span>金元宝</button>
+                <button class="item-btn" onclick="start(this, '金条')"><span>🏆</span>金条</button>
+                <button class="item-btn" onclick="start(this, '饺子')"><span>🥟</span>饺子</button>
+                <button class="item-btn" onclick="start(this, '红烧肉')"><span>🥩</span>红烧肉</button>
+                <button class="item-btn" onclick="start(this, '美酒')"><span>🍶</span>美酒</button>
+            </div>
+        </div>
+
+        <!-- 进行中的交互层 -->
+        <div class="ritual-overlay" id="ritualUI">
+            <div class="timer-text" id="timerTip">正在为您传递思念... 60s</div>
+            <input type="text" class="message-input" placeholder="此刻，你想对亲人说些什么？" id="msgInput">
+        </div>
+    </div>
+
+    <script>
+        /** 火焰与灰烬粒子系统 **/
+        const canvas = document.getElementById('fireCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let ashParticles = [];
+        let isBurning = false;
+        let w, h;
+
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor(isAsh = false) {
+                this.isAsh = isAsh;
+                this.reset();
+            }
+            reset() {
+                this.x = w / 2 + (Math.random() - 0.5) * 60;
+                this.y = h * 0.7;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = this.isAsh ? -(Math.random() * 2 + 1) : -(Math.random() * 3 + 2);
+                this.life = Math.random() * 30 + 20;
+                this.maxLife = this.life;
+                this.size = this.isAsh ? Math.random() * 3 : Math.random() * 20 + 10;
+                this.color = this.isAsh ? `rgba(150,150,150,${Math.random()*0.5})` : `hsla(${Math.random() * 30 + 15}, 100%, 50%, 0.5)`;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+                if (this.isAsh) {
+                    this.vx += Math.sin(this.y * 0.01) * 0.1; // 灰烬随风摆动
+                }
+                if (this.life <= 0) this.reset();
+            }
+            draw() {
+                ctx.save();
+                ctx.beginPath();
+                if (!this.isAsh) {
+                    ctx.globalCompositeOperation = 'lighter';
+                    ctx.filter = 'blur(8px)';
+                }
+                ctx.fillStyle = this.color;
+                ctx.arc(this.x, this.y, this.size * (this.life / this.maxLife), 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function initParticles() {
+            particles = Array.from({ length: 80 }, () => new Particle(false));
+            ashParticles = Array.from({ length: 50 }, () => new Particle(true));
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, w, h);
+            if (isBurning) {
+                particles.forEach(p => { p.update(); p.draw(); });
+                ashParticles.forEach(p => { p.update(); p.draw(); });
+            }
+            requestAnimationFrame(animate);
+        }
+
+        /** 逻辑控制 **/
+        function start(btn, itemName) {
+            document.getElementById('menu').style.opacity = '0';
+            setTimeout(() => document.getElementById('menu').classList.add('hidden'), 1000);
+            
+            isBurning = true;
+            initParticles();
+            
+            const ritualUI = document.getElementById('ritualUI');
+            ritualUI.classList.add('active');
+            
+            let timeLeft = 60;
+            const timerTip = document.getElementById('timerTip');
+            
+            const countdown = setInterval(() => {
+                timeLeft--;
+                timerTip.innerText = `正在为您祭献${itemName}... ${timeLeft}s`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdown);
+                    finish();
+                }
+            }, 1000);
+        }
+
+        function finish() {
+            const ritualUI = document.getElementById('ritualUI');
+            const timerTip = document.getElementById('timerTip');
+            const msgInput = document.getElementById('msgInput');
+            
+            // 慢慢熄灭火焰
+            const fadeEffect = setInterval(() => {
+                if(particles.length > 0) particles.pop();
+                else {
+                    clearInterval(fadeEffect);
+                    isBurning = false;
+                }
+            }, 50);
+
+            timerTip.innerText = "仪式完成，思念已随灰烬寄往远方。";
+            msgInput.style.display = 'none';
+            
+            setTimeout(() => {
+                location.reload(); 
+            }, 8000);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
